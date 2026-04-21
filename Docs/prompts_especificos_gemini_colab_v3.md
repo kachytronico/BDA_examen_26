@@ -1,30 +1,28 @@
-# Prompts de conversación para Gemini en Colab
-## Inicio, recentrado y corrección semántica de apartados
+# Prompts específicos para Gemini en Colab
+## Inicio, control, conclusiones y depuración final del cuaderno
 
-Este documento reúne prompts cortos para:
+Este documento reúne los prompts prácticos que puedes pegar en el chat de Gemini durante la conversación.
 
-- arrancar una sesión,
-- fijar el modo estricto,
-- recentrar a Gemini si se descontrola,
-- y corregirlo si empieza a reinterpretar apartados del enunciado.
+No hace falta usarlos todos.  
+Usa solo el que te haga falta en cada momento.
 
 ---
 
-# 1. Prompt de inicio de sesión
+# 1. Prompt de inicio de conversación
 ```text
-Vas a trabajar conmigo en Google Colab para resolver una tarea o examen práctico de BDA.
+Te he pasado en esta conversación tres documentos que debes memorizar y tener en cuenta en toda la conversación. Vas a trabajar conmigo en este cuaderno de Google Colab para resolver la tarea marcada en la celda del enunciado. Analiza todo el cuaderno con detalle antes de proceder.
 
 Reglas obligatorias:
 1. Primero analizas el enunciado y respondes solo en el chat.
 2. Antes de tocar el cuaderno debes decir:
-   - qué has entendido,
-   - qué punto toca resolver,
-   - qué vas a comprobar,
-   - y preguntarme si quiero que empieces por ese punto.
+- qué has entendido,
+- qué punto toca resolver,
+- qué vas a comprobar,
+- y preguntarme si quiero que empieces por ese punto.
 3. Sin mi OK no puedes crear ninguna celda.
 4. Cuando te autorice, solo puedes crear:
-   - una celda markdown con el texto literal del punto y una explicación muy breve,
-   - una celda de código mínima con evidencia visible.
+- una celda markdown con el texto literal del punto y una explicación muy breve,
+- una celda de código mínima con evidencia visible.
 5. Después de ejecutar, escribes solo una conclusión breve y vuelves al chat.
 6. No puedes usar el cuaderno como chat.
 7. No puedes crear Task, Plan, Strategy, Roadmap, Summary ni Next step.
@@ -36,9 +34,9 @@ Confirma que trabajarás exactamente así.
 
 ---
 
-# 2. Prompt de arranque corto
+# 2. Prompt corto de arranque
 ```text
-Modo estricto:
+Trabaja en modo estricto:
 - primero chat,
 - luego me preguntas si empiezas,
 - sin mi OK no tocas el cuaderno,
@@ -46,9 +44,7 @@ Modo estricto:
 - luego una conclusión breve,
 - y vuelves al chat.
 
-Además:
-- no reinterpretes apartados del enunciado por tu cuenta,
-- sigue primero el contexto de la unidad.
+No puedes usar el cuaderno como chat ni crear Task, Plan, Strategy, Roadmap, Summary o Next step.
 Confirma y espera el punto a resolver.
 ```
 
@@ -59,7 +55,7 @@ Confirma y espera el punto a resolver.
 No escribas nada todavía en el cuaderno.
 Quiero primero un análisis conceptual breve en el chat:
 - qué pide este punto,
-- qué significado tiene en esta unidad,
+- qué riesgos tiene,
 - qué bloque mínimo tocaría hacer,
 - y si quieres empezar por ese punto.
 Nada más.
@@ -79,7 +75,16 @@ No añadas conclusiones, planes ni siguientes pasos todavía.
 
 ---
 
-# 5. Prompt de recentrado si empieza a proponer varios pasos
+# 5. Prompt de conclusión breve
+```text
+Ahora no propongas el siguiente paso todavía.
+Dame solo una conclusión breve, clara y en primera persona sobre este punto, aunque haya tenido varias fases.
+Nada de estrategia, nada de próximos pasos y nada de texto decorativo.
+```
+
+---
+
+# 6. Prompt para recentrar si empieza a descontrolarse
 ```text
 Te estás adelantando.
 Vuelve al protocolo estricto:
@@ -93,7 +98,7 @@ Reformula en el chat qué has entendido y pregúntame si quieres que empieces po
 
 ---
 
-# 6. Prompt de recentrado duro
+# 7. Prompt de recentrado duro
 ```text
 No estás siguiendo las instrucciones.
 Reinicia tu comportamiento ahora:
@@ -113,7 +118,7 @@ Responde solo con:
 
 ---
 
-# 7. Prompt para cortar celdas innecesarias
+# 8. Prompt para cortar celdas innecesarias
 ```text
 No añadas más texto al cuaderno.
 Has metido contenido que no corresponde al notebook final.
@@ -128,7 +133,7 @@ Confirma y espera instrucciones.
 
 ---
 
-# 8. Prompt para frenar decisiones delicadas
+# 9. Prompt para frenar decisiones delicadas
 ```text
 Detente.
 Esa decisión no puedes tomarla solo.
@@ -146,7 +151,7 @@ No sigas hasta que yo responda.
 
 ---
 
-# 9. Prompt para errores
+# 10. Prompt para errores
 ```text
 No rehagas nada todavía.
 Describe el error de forma breve:
@@ -155,15 +160,6 @@ Describe el error de forma breve:
 - corrección propuesta,
 - y si esa corrección implica una decisión importante.
 Si implica una decisión relevante, espera mi confirmación.
-```
-
----
-
-# 10. Prompt para cierre limpio de un punto
-```text
-Ahora no propongas el siguiente paso todavía.
-Dame solo una conclusión breve, clara y en primera persona sobre este punto.
-Nada de estrategia, nada de próximos pasos y nada de texto decorativo.
 ```
 
 ---
@@ -198,9 +194,107 @@ Confirma en una sola frase.
 
 ---
 
-# 13. Prompt específico para corregir reinterpretación semántica
-Úsalo cuando Gemini cambia el significado de un punto.
+# 13. Prompt para depuración final de markdown y conclusiones
+```text
+Ahora vamos a hacer una depuración final solo del texto del cuaderno.
 
+Quiero que revises todas las celdas markdown y todas las conclusiones ya escritas y las reescribas con estas reglas:
+
+- en primera persona,
+- sencillas,
+- humanizadas,
+- directas,
+- sin tono académico,
+- sin sonar a IA,
+- sin texto decorativo,
+- sin repetir explicaciones obvias,
+- sin añadir información nueva,
+- sin cambiar el sentido técnico,
+- sin cambiar la estructura del cuaderno,
+- sin crear celdas nuevas,
+- sin tocar el código.
+
+Tu objetivo es que el cuaderno suene natural, claro y limpio, como si lo hubiera escrito yo de forma sencilla.
+
+Antes de tocar nada:
+1. dime qué tipo de cambios harás,
+2. confirma que no vas a modificar estructura ni contenido técnico,
+3. y pregúntame si quiero que empieces con esa revisión.
+```
+
+---
+
+# 14. Prompt para depuración final de comentarios en código
+```text
+Ahora quiero una depuración final solo de los comentarios dentro de las celdas de código.
+
+Reglas:
+- no cambies ni una sola línea de lógica,
+- no cambies nombres de variables,
+- no cambies imports,
+- no cambies resultados,
+- no añadas código nuevo,
+- no borres comprobaciones visibles,
+- solo puedes reescribir comentarios.
+
+Quiero que los comentarios queden:
+- cortos,
+- claros,
+- útiles,
+- en español,
+- sencillos,
+- directos,
+- sin tono académico,
+- sin sonar a IA,
+- sin explicar cosas evidentes,
+- y sin repetir lo que el propio código ya muestra.
+
+Si un comentario no aporta valor real, elimínalo.
+Si un comentario es demasiado largo, redúcelo.
+Si un bloque no necesita comentarios, déjalo limpio.
+
+Antes de tocar nada:
+1. dime qué criterio vas a seguir,
+2. confirma que no vas a cambiar el código,
+3. y pregúntame si quiero que empieces.
+```
+
+---
+
+# 15. Prompt combinado de depuración final
+```text
+Vamos a hacer la depuración final del cuaderno en dos fases y sin tocar el contenido técnico.
+
+Fase 1:
+- revisar todas las celdas markdown y conclusiones,
+- dejarlas en primera persona,
+- sencillas,
+- humanizadas,
+- directas,
+- sin tono académico,
+- sin sonar a IA,
+- sin texto decorativo,
+- sin añadir información nueva.
+
+Fase 2:
+- revisar solo los comentarios dentro del código,
+- hacerlos breves, claros y útiles,
+- eliminar los innecesarios,
+- sin cambiar absolutamente nada del código.
+
+Reglas generales:
+- no crear celdas nuevas,
+- no mover celdas,
+- no cambiar estructura,
+- no cambiar lógica,
+- no cambiar resultados.
+
+Antes de empezar, dime exactamente cómo harás estas dos fases y pregúntame si quiero que empieces por la fase 1.
+```
+
+---
+
+# 16. Prompt para reinterpretación semántica incorrecta
 ```text
 Estás reinterpretando mal este apartado.
 
@@ -216,9 +310,7 @@ No toques todavía el cuaderno.
 
 ---
 
-# 14. Prompt específico para UD1 · Punto 4
-Úsalo exactamente para el caso que has detectado.
-
+# 17. Prompt específico para UD1 · Punto 4
 ```text
 En UD1, el punto 4 no se resuelve con limpieza textual.
 
@@ -235,62 +327,54 @@ No escribas nada todavía en el cuaderno.
 
 ---
 
-# 15. Prompt para cuando el dataset complica el patrón estándar
-```text
-No cambies el significado del apartado por culpa del dataset.
-Si el dataset no encaja del todo en el patrón habitual:
-- explica qué columnas reales ves,
-- qué opciones hay,
-- qué parte del patrón sigue siendo obligatoria,
-- y qué decisión necesitas que valide.
-No resuelvas el punto por tu cuenta con una reinterpretación cómoda.
-```
-
----
-
-# 16. Secuencia recomendada de uso
+# 18. Uso práctico recomendado
 ## Al empezar
-1. usa el Prompt 1 o 2
+Usa el prompt 1 o 2.
 
 ## Antes de un punto delicado
-2. usa el Prompt 3
+Usa el prompt 3.
 
 ## Cuando quieras que escriba el bloque
-3. usa el Prompt 4
+Usa el prompt 4.
+
+## Cuando haya terminado el punto
+Usa el prompt 5.
 
 ## Si se empieza a perder
-4. usa el Prompt 5
+Usa el prompt 6.
 
 ## Si insiste
-5. usa el Prompt 6 o 12
+Usa el prompt 7 o 12.
 
 ## Si mete basura en el notebook
-6. usa el Prompt 7
+Usa el prompt 8.
 
 ## Si toma decisiones solo
-7. usa el Prompt 8
+Usa el prompt 9.
 
 ## Si falla una ejecución
-8. usa el Prompt 9
+Usa el prompt 10.
 
-## Si quieres cierre limpio
-9. usa el Prompt 10 y luego el 11
+## Si quieres devolver todo al chat
+Usa el prompt 11.
+
+## Cuando el cuaderno ya esté hecho y quieras pulirlo
+Usa el prompt 13 y luego el 14, o directamente el 15.
 
 ## Si cambia el significado del apartado
-10. usa el Prompt 13  
-11. y, si es UD1 punto 4, usa el Prompt 14
+Usa el prompt 16.
+Si además es UD1 punto 4, usa el 17.
 
 ---
 
-# 17. Regla práctica final
-No discutas demasiado con el agente.
+# 19. Regla práctica final
+No intentes corregir todo a la vez.
 
-Cuando se desvíe:
+Cuando Gemini se desvíe:
 - corta el comportamiento,
 - fija otra vez el modo,
-- corrige el significado del punto,
 - vuelve al bloque mínimo,
 - y sigue.
 
-Lo importante no es convencerlo.  
-Lo importante es **encerrarlo otra vez en el formato y en el significado correctos**.
+Lo importante no es discutir con el agente.
+Lo importante es **encerrarlo otra vez en el formato correcto**.
