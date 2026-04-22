@@ -225,6 +225,57 @@ Pig no sobrescribe. Antes de cada `STORE` la carpeta de salida no debe existir.
 
 - si la salida es relativa: `!rm -rf <carpeta>`
 
+### 7.7. CRÍTICO: Rutas en Colab (no confundir con HDFS real)
+
+**Esto es causa del 90% de atascos en Pig.**
+
+En Colab, **NO existe HDFS real formateado**. Por tanto:
+
+#### ❌ INCORRECTO (causará atasco):
+```pig
+transactions = LOAD '/input/archivo.csv' ...
+STORE ... INTO '/output/resultado' ...
+```
+
+**¿Por qué?** `/input/` y `/output/` son rutas HDFS que no existen en Colab. Pig intenta encontrarlas en HDFS, el proceso se congela o falla silenciosamente.
+
+#### ✅ CORRECTO (funciona en Colab):
+```pig
+transactions = LOAD 'input/archivo.csv' ...
+STORE ... INTO 'salida_limpio' ...
+```
+
+#### Pasos previos (OBLIGATORIO):
+Antes de crear script Pig, SIEMPRE haz esto:
+
+```python
+# 1. Crear carpeta relativa en Colab
+!mkdir -p input
+
+# 2. Copiar archivos desde donde estén a la carpeta relativa
+!cp /content/datasets/*.csv input/
+# O desde HDFS (si ya los pusiste):
+!hdfs dfs -get /input/archivo.csv input/
+
+# 3. Verificar que existen
+!ls -la input/
+!head input/archivo.csv
+```
+
+#### Regla de oro:
+- **Entrada**: Carpeta relativa `'input/...'` (creada en Colab)
+- **Salida**: Carpeta relativa `'salida_xxx'` (sin `/`)
+- **Nunca**: Rutas con `/` inicial en LOAD o STORE
+- **Lectura posterior**: `!head salida_xxx/part-m-00000` o pandas
+
+#### Signo de alerta:
+Si ves en un script:
+- `LOAD '/input/...'`
+- `STORE ... INTO '/output/...'`
+- `!hdfs dfs -rm -r /output/...`
+
+→ **ES UN ERROR**, debe corregirse a rutas relativas ANTES de ejecutar.
+
 ---
 
 ## 8. Regla de compatibilidad con Pig antiguo
