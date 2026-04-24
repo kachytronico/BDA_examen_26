@@ -33,6 +33,9 @@ Todas las plantillas de este documento están escritas con placeholders (`<archi
 
 ', '')` y `REGEX_EXTRACT` no anclado), que dejan la columna vacía sin error visible.
 - Se aclara el **patrón determinístico de TOP N**: `ORDER BY → STORE → !head -n N part-*`. El patrón `LOAD + LIMIT` tras el STORE intermedio devuelve las N tuplas correctas pero sin orden garantizado, así que no vale para presentar un ranking DESC en el informe.
+- Se fija la **instalación obligatoria de Spark en Colab** (§20.3.0): descarga del binario `spark-3.5.4-bin-hadoop3.tgz` desde `archive.apache.org` + `findspark` + variables de entorno. **Prohibido** `!pip install pyspark` (trae su propio Hadoop y genera classpath inconsistente con el Hadoop 3.4.2 manual de UD2/UD3).
+- Se añade la **limpieza obligatoria del metastore Derby** (§20.4.0) antes del primer `spark.sql` Hive, para evitar `Failed to start database 'metastore_db'` tras reinicios de kernel.
+- Se añade **`CREATE DATABASE` + `USE <base>` explícitos** antes de `saveAsTable` (§20.4.1) y **validación de contenido** (`DESCRIBE` + `COUNT` + `LIMIT 3`) entre la carga y las consultas HQL (§20.4.2).
 
 ---
 
@@ -896,15 +899,48 @@ Spark no sustituye Pig. Su papel principal en UD3 es:
 - **tipar columnas que Pig dejó como `chararray` por estrategia conservadora**,
 - guardar tablas.
 
-#### Bloque núcleo
+#### 20.3.0. Instalación obligatoria de Spark en Colab (regla dura)
+En UD3, Spark se instala **siempre** descargando el binario oficial compilado para Hadoop 3 y exponiéndolo con `findspark`. **Prohibido** `!pip install pyspark`.
+
+Patrón obligatorio:
 ```python
+# Descarga del binario Spark compilado contra Hadoop 3 (compatible con Hadoop 3.4.2 de UD3)
+!wget -q https://archive.apache.org/dist/spark/spark-3.5.4/spark-3.5.4-bin-hadoop3.tgz
+!tar xf spark-3.5.4-bin-hadoop3.tgz
+!pip install -q findspark
+
+import os
+os.environ["JAVA_HOME"]  = "/usr/lib/jvm/java-17-openjdk-amd64"
+os.environ["SPARK_HOME"] = "/content/spark-3.5.4-bin-hadoop3"
+
+import findspark
+findspark.init()
+
 from pyspark.sql import SparkSession
 
 spark = (SparkSession.builder
     .appName("BDA_UD3")
+    .config("spark.sql.warehouse.dir", "/content/spark-warehouse")
     .enableHiveSupport()
     .getOrCreate())
+
+# (opcional pero útil si algún cuaderno del tutor usa `sc` para RDDs)
+sc = spark.sparkContext
+
+print("Spark:", spark.version)
 ```
+
+Por qué este patrón y no `!pip install pyspark`:
+- `!pip install pyspark` descarga un wheel de PyPI que trae **su propia copia de los JARs de Hadoop** dentro, distinta del Hadoop 3.4.2 instalado manualmente en UD3. El resultado es una sesión con **dos Hadoops** coexistiendo (el del wheel y el manual), con classpath inconsistente.
+- La versión de pyspark en PyPI cambia sin aviso; el `.tgz` de `archive.apache.org` es inmutable → versión fija entre ejecuciones.
+- `spark-3.5.4-bin-hadoop3` está **compilado contra Hadoop 3.x**, compatible con el Hadoop 3.4.2 usado en UD2/UD3.
+- `enableHiveSupport()` + metastore Derby funciona de forma predecible sobre esta instalación; con el wheel, los shims Hive pueden chocar con versiones de Hadoop distintas a las esperadas.
+
+Prohibiciones explícitas:
+- **No** `!pip install pyspark` como atajo.
+- **No** instalar Spark sin fijar `JAVA_HOME` y `SPARK_HOME`.
+- **No** asumir que `findspark` encuentra Spark sin `SPARK_HOME` correcto.
+- **No** mezclar versiones de Spark entre celdas (la versión queda fijada en `SPARK_HOME`).
 
 #### Leer salida de Pig y revisar
 ```python
@@ -937,15 +973,54 @@ sdf = sdf.withColumn(
 ### 20.4. Hive / HQL
 Hive/HQL es la fase de explotación final.
 
-#### Crear base y guardar tablas
+#### 20.4.0. Limpieza del metastore Derby antes de la primera operación Hive
+Spark con `enableHiveSupport()` en Colab usa un metastore embebido **Derby** en el CWD. Si una sesión anterior dejó `metastore_db/` con locks o metadata inconsistente, `CREATE DATABASE` o `saveAsTable` fallan con errores tipo `Failed to start database 'metastore_db'` o `Another instance of Derby may have already booted the database`.
+
+Patrón obligatorio antes del primer `spark.sql` de Hive:
+
 ```python
+import os, shutil
+
+# Limpiar metastore Derby si ha quedado de una sesión anterior
+for p in ("metastore_db", "derby.log"):
+    if os.path.exists(p):
+        shutil.rmtree(p) if os.path.isdir(p) else os.remove(p)
+```
+
+Es **idempotente**: si los ficheros no existen, no pasa nada. Conviene dejarlo siempre al principio del bloque Hive.
+
+Caveat: ejecutar esta limpieza **antes** de que el SparkSession haya realizado cualquier operación Hive. Si ya se ejecutó `CREATE DATABASE` o `saveAsTable` en esta sesión, borrar la carpeta puede dejar Derby en estado inconsistente. El orden correcto es: `SparkSession creada → limpieza metastore → primer spark.sql Hive`.
+
+#### 20.4.1. Crear base, guardar tablas y validar
+```python
+# 1. Base de datos explícita (el enunciado exige "base de datos Hive")
 spark.sql("CREATE DATABASE IF NOT EXISTS <base>")
 spark.sql("USE <base>")
 
+# 2. Guardar tablas
 sdf_A.write.mode("overwrite").saveAsTable("<tabla_A>")
 sdf_B.write.mode("overwrite").saveAsTable("<tabla_B>")
 
-spark.sql("SHOW TABLES").show(truncate=False)
+# 3. Validar bases y tablas creadas
+print("--- Bases de datos Hive ---")
+spark.sql("SHOW DATABASES").show()
+
+print(f"--- Tablas en la base <base> ---")
+spark.sql("SHOW TABLES IN <base>").show()
+```
+
+#### 20.4.2. Validación del contenido antes de consultar (obligatorio)
+Entre "crear tablas" y "lanzar consultas HQL" debe haber una celda de validación. No dar por buena la carga sin mirar qué hay dentro:
+
+```python
+for tabla in ["<tabla_A>", "<tabla_B>", "<tabla_C>"]:
+    print(f"\n=== Tabla {tabla} ===")
+    print("Esquema:")
+    spark.sql(f"DESCRIBE {tabla}").show(truncate=False)
+    print("Número de filas:")
+    spark.sql(f"SELECT COUNT(*) AS total FROM {tabla}").show()
+    print("Primeras 3 filas:")
+    spark.sql(f"SELECT * FROM {tabla} LIMIT 3").show(truncate=False)
 ```
 
 #### Consulta simple
@@ -1053,12 +1128,18 @@ LIMIT 20
 - depender de archivos externos no creados en el cuaderno.
 
 ### Spark
+- instalar Spark con `!pip install pyspark` en vez del patrón obligatorio `wget .tgz + findspark` (§20.3.0),
+- arrancar Spark sin fijar `JAVA_HOME` y `SPARK_HOME`,
+- mezclar versiones de Spark entre celdas,
 - schema mal inferido,
 - confiar en `inferSchema` sin revisar,
 - no activar soporte Hive,
 - olvidarse de tipar las columnas que Pig dejó como texto.
 
 ### Hive
+- no limpiar `metastore_db/` + `derby.log` antes del primer `spark.sql` Hive (§20.4.0),
+- no crear la base de datos con `CREATE DATABASE` + `USE <base>` — guardar tablas en `default` cuando el enunciado exige "base de datos Hive",
+- saltar la validación (`DESCRIBE` + `COUNT` + `LIMIT 3`) entre carga y consultas,
 - `saveAsTable` falla por catálogo o por no usar la base correcta,
 - tablas vacías.
 
@@ -1099,6 +1180,11 @@ Antes de proponer cualquier bloque, el agente debe revisar:
 - dar un apartado por cumplido habiendo resuelto solo parte,
 - usar Kaggle como vía obligatoria si el enunciado no lo pide,
 - copiar una versión fija de Java/Spark como si fuera universal,
+- **instalar Spark con `!pip install pyspark`** (en UD3 Spark se instala SIEMPRE con `wget .tgz + findspark` — §20.3.0),
+- arrancar Spark sin `SPARK_HOME` y `JAVA_HOME` fijados en variables de entorno,
+- saltar la limpieza de `metastore_db/` + `derby.log` antes del primer `spark.sql` Hive (§20.4.0),
+- guardar tablas sin crear antes la base de datos (`CREATE DATABASE` + `USE <base>`) — §20.4.1,
+- pasar de `saveAsTable` a consultas HQL sin celda intermedia de validación (`DESCRIBE` + `COUNT` + `LIMIT 3`) — §20.4.2,
 - saltarse Pig si el punto exige Pig,
 - usar `pig -x local` como modo por defecto sin justificarlo,
 - usar rutas HDFS absolutas (`/input/...`, `/output/...`) en scripts Pig,
@@ -1113,7 +1199,12 @@ Antes de proponer cualquier bloque, el agente debe revisar:
 - consultar tablas que no ha validado,
 - hacer joins por columnas con nombres parecidos pero sentido distinto,
 - cargar una tabla y consultar otra,
-- hablar del pipeline como teoría sin ejecutarlo realmente.
+- hablar del pipeline como teoría sin ejecutarlo realmente,
+- **instalar Spark con `!pip install pyspark`** (trae su propio Hadoop y rompe la coherencia con el Hadoop 3.4.2 manual),
+- arrancar el SparkSession sin fijar `JAVA_HOME` y `SPARK_HOME`,
+- saltar la limpieza de `metastore_db/` + `derby.log` antes del primer `spark.sql` Hive,
+- guardar tablas sin `CREATE DATABASE` + `USE <base>` (viola el literal del enunciado "base de datos Hive"),
+- saltar la validación `DESCRIBE` + `COUNT` + `LIMIT 3` entre la carga y las consultas HQL.
 
 ---
 
