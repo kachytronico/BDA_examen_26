@@ -185,18 +185,12 @@ Reglas de forma:
 Frases prohibidas al inicio (incumplen primera persona):
 - "Se ha garantizado..."
 - "Se han definido..."
-- "Hemos garantizado..."
-- "El proceso de... se basa en..."
-- "Aplicando X... hemos logrado..."
+
 
 Frases prohibidas al final (anuncian pasos futuros o decoran):
 - "lo cual será clave para..."
 - "permitiendo así..."
-- "evitando así que..."
-- "asegurando que..."
-- "garantizando la..."
-- "manteniendo la..."
-- "demostrando ser una técnica muy efectiva..."
+
 
 Termina con un dato concreto observado en la salida (cifra, nombre de columna, recuento, p-valor, etc.).
 
