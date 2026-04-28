@@ -4,15 +4,33 @@
 >
 > **Filtro obligatorio antes de aplicar cualquier mejora:** ¿añade complejidad? Si sí, ¿el beneficio justifica el coste? La investigación es clara: superar ~7 reglas o subdividir el flujo aumenta el riesgo de modo automático. Cuando dudes, descarta.
 
-> **Estados:** propuesta · validar en próximo simulacro · aceptada · descartada · aplicada
+> **Estados:** propuesta · validar en próximo simulacro · ✅ aplicada · descartada · cerrada
 > **Prioridades:** alta · media · baja
+
+## Resumen de estado actual (2026-04-28)
+
+**Aplicadas:** M001, M002 (validar pendiente), M003 (cerrada), M004, M005, M006, M008, M009 (cerrada), M010, M011, M012, M013, M014, M015, M016.
+
+**Pendientes reales:**
+- **M007** — Protocolo de reinicio de sesión Gemini. A validar si aparecen problemas de tokens.
+- **M002** — A confirmar en próximo simulacro (validación pendiente, no acción).
+
+**Versiones de documentos vigentes tras esta tanda:**
+- `01_instrucciones_gem_v5_1.md` (sin cambios)
+- `02_documento_maestro_v4.md` (sin cambios)
+- `03_guia_estilo_v4.md` (sin cambios)
+- **`04_prompts_flujo_v8.md`** ⬅️ NUEVO (M008, M012, M013)
+- `05_plantilla_contexto_unidad_v3.md` (sin cambios; M004 ya aplicada en v3)
+- `06_CONTEXTO_UD1_v3.md` (sin cambios; M010 y M011 ya aplicadas en v3)
+- **`06_CONTEXTO_UD2_v4.md`** ⬅️ NUEVO (M014, M016, sección 0 con plantillas)
+- **`07_PLAN_TAREA_plantilla_v2.md`** ⬅️ NUEVO (M015)
 
 ---
 
 ## M001 · Falta paso de análisis previo del dataset entre exploración y primer apartado ✅ CONFIRMADA
 
 **Detectada:** 2026-04-28, simulacros 1 y 2 BDA01 con sistema v5
-**Estado:** validada en simulacro 3 · pendiente integrar al documento oficial
+**Estado:** ✅ aplicada en flujo v7+ (prompt 3 hace este trabajo)
 **Prioridad:** alta
 
 ### Problema observado
@@ -40,7 +58,7 @@ Resultado: la sección 9 quedó con información concreta y citable. El test ác
 ## M004 · Eliminar prompt redundante del CONTEXTO_UD1 (y de la plantilla)
 
 **Detectada:** 2026-04-28, simulacro 3 BDA01
-**Estado:** propuesta clara, aplicable al cerrar simulacro
+**Estado:** ✅ aplicada (verificada al revisar plantilla v3, la sección ya estaba eliminada)
 **Prioridad:** media
 
 ### Problema observado
@@ -61,7 +79,7 @@ Con la incorporación del prompt 2-bis al flujo (M001), el rellenado pasa a ser 
 ## M005 · Prompt 4 fuerza celda de código incluso en apartados narrativos
 
 **Detectada:** 2026-04-28, simulacro 3 BDA01
-**Estado:** detectada y resuelta manualmente por usuario
+**Estado:** ✅ aplicada en flujo v7+ (prompt 5: "omítela si el apartado es puramente narrativo")
 **Prioridad:** media
 
 ### Problema observado
@@ -84,7 +102,7 @@ Validar que el agente entienda la condición sin liarla.
 ## M006 · Aclarar el significado de "bloque mínimo" en el prompt 4
 
 **Detectada:** 2026-04-28, simulacro 3 BDA01
-**Estado:** propuesta
+**Estado:** ✅ aplicada en flujo v7+ (prompt 5 incluye: "mínimo significa no añadir nada que el apartado no pida, NO significa hacer lo más corto posible. Cumple TODO lo que el apartado pida explícitamente")
 **Prioridad:** media
 
 ### Problema observado
@@ -139,7 +157,7 @@ Crear un protocolo de reinicio breve:
 ## M008 · Conclusiones siguen incumpliendo el espíritu de la guía de estilo 🔥 prioridad alta
 
 **Detectada:** 2026-04-28, simulacro 3 BDA01, apartados 1-5
-**Estado:** confirmada en 4 conclusiones de 5
+**Estado:** ✅ aplicada en flujo v8 (prompt 6 reforzado con "regla de parada" + frases prohibidas ampliadas con "nos permite", "hemos completado", "cerrando así la fase")
 **Prioridad:** alta
 
 ### Problema observado
@@ -207,7 +225,7 @@ Cerrada. Solo registrar como aprendizaje: el agente sabe gestionar nombres de co
 ## M010 · Análisis estadístico al nivel de granularidad inadecuado 🔥 prioridad alta
 
 **Detectada:** 2026-04-28, auditoría completa simulacro 3 BDA01
-**Estado:** confirmada como gap real del CONTEXTO_UD1
+**Estado:** ✅ aplicada en CONTEXTO_UD1 v3 (verificado: nota presente en apartados 8, 10, 11 sobre granularidad correcta)
 **Prioridad:** alta
 
 ### Problema observado
@@ -239,11 +257,11 @@ Esto añade ~150 caracteres al CONTEXTO_UD1 y previene un fallo metodológico re
 ## M013 · Actualizar PLAN_TAREA tras cada apartado añade ruido sin valor real
 
 **Detectada:** 2026-04-28, simulacro 4 BDA01 (dataset turismo)
-**Estado:** propuesta clara, aplicar al cerrar simulacro
+**Estado:** ✅ aplicada en flujo v8 (prompt 7 simplificado, PLAN_TAREA fijo tras inicio salvo cambio real de plan)
 **Prioridad:** media
 
 ### Problema observado
-El sistema v7 establece que tras cada apartado el agente actualiza:
+El sistema v7 establecía que tras cada apartado el agente actualiza:
 - la tabla "Estado de avance" de PLAN_TAREA (marca apartado como ✅),
 - la sección "Decisiones tomadas" (añade línea si hay decisión relevante).
 
@@ -277,7 +295,7 @@ En el simulacro 4 esto añade un prompt completo al ciclo de cada apartado ("Act
 ## M011 · Conclusiones más detalladas en P3, P4, P8 (mejor visualización)
 
 **Detectada:** 2026-04-28, comparación con Maitane
-**Estado:** observación de calidad
+**Estado:** ✅ aplicada en CONTEXTO_UD1 v3 (verificado: notas presentes en apartados Perfilado, Normalización, PCA)
 **Prioridad:** media
 
 ### Problema observado
@@ -310,7 +328,7 @@ SÍ añadir nota al CONTEXTO_UD1 en los apartados específicos donde el "mínimo
 ## M012 · Exploración duplica trabajo cuando ya hay DataFrames cargados
 
 **Detectada:** 2026-04-28, simulacro 4 BDA01 (dataset turismo)
-**Estado:** observación menor del prompt 2
+**Estado:** ✅ aplicada en flujo v8 (prompt 2 ampliado con comprobación de DataFrames ya cargados antes de explorar el directorio)
 **Prioridad:** baja
 
 ### Problema observado
@@ -377,3 +395,107 @@ Aún así, hay un riesgo arquitectónico real que vale la pena dejar registrado:
 
 ### Estado
 Cerrado por ahora. Si en simulacros futuros se observa que el agente sí toma las celdas pre-cargadas como modelo, reabrir.
+
+---
+
+## M014 · Subida a HDFS: estabilizar ruta vía /content/ y nombre fijo de carpeta
+
+**Detectada:** 2026-04-28, preparación UD2 (dataset turismo)
+**Estado:** ✅ aplicada al CONTEXTO_UD2 v4
+**Prioridad:** alta
+
+### Problema observado
+Dos fallos reales en la subida de archivos a HDFS cuando el agente seguía el CONTEXTO_UD2 v3:
+1. El agente hacía `hdfs dfs -put` directamente desde la ruta devuelta por `kagglehub.dataset_download(...)`. En la primera ejecución la ruta es `/kaggle/input/...` y en las siguientes `/root/.cache/kagglehub/...`, lo que rompía el comando al reanudar la sesión.
+2. El agente creaba carpetas en HDFS con nombres variables (`datasets`, `data`, etc.) según la sesión, lo que rompía la consistencia de los comandos posteriores (`hadoop jar ... grep <carpeta> ...`).
+
+### Solución aplicada
+Patrón fijo de 4 pasos en sección 4 y 7.2 del CONTEXTO_UD2 v4:
+1. `shutil.copy(<ruta_kagglehub>, '/content/<nombre_corto>.csv')` — estabiliza la ruta y limpia el nombre.
+2. `!hdfs dfs -mkdir -p dataset` — carpeta HDFS siempre llamada `dataset` (singular).
+3. `!hdfs dfs -put -f /content/<nombre_corto>.csv dataset/`.
+4. `!hdfs dfs -ls dataset/` para verificar.
+
+Añadidas dos señales de error en sección 9:
+- creación de carpeta HDFS con nombre distinto a `dataset`,
+- `put` directo desde la ruta de kagglehub sin pasar por `/content/`.
+
+### Por qué este enfoque y no el doble-put de la referencia Santiago
+Santiago usa `put -f` con dos rutas posibles para defenderse del caching. Funciona pero tiene tres pegas:
+- Ensucia el cuaderno con un comando que sabes que va a fallar a propósito.
+- El archivo conserva el nombre original con espacios y numeración, incómodo en comandos posteriores.
+- No resuelve la consistencia del nombre de carpeta HDFS.
+
+El patrón vía `/content/` resuelve los tres puntos a la vez con código más limpio.
+
+### Acciones
+1. Aplicados parches al CONTEXTO_UD2 v4 (hecho).
+2. Validar en próximo simulacro UD2 que el agente respeta `dataset` (singular) sin desviarse.
+3. Si en algún examen futuro el profesor pide explícitamente otro nombre de carpeta, anotarlo en PLAN_TAREA y permitir excepción puntual.
+
+---
+
+## M015 · PLAN_TAREA debe listar todos los archivos que entran al pipeline Hadoop
+
+**Detectada:** 2026-04-28, simulacro UD2
+**Estado:** ✅ aplicada a PLAN_TAREA v2
+**Prioridad:** alta
+
+### Problema observado
+El agente sube a HDFS solo los archivos que figuran explícitamente en PLAN_TAREA. Si la tarea de UD2/UD3 requiere procesar varios archivos juntos (grep o wordcount sobre múltiples CSVs en la misma carpeta), pero PLAN_TAREA menciona solo el dataset principal, el agente cumple lo que ve y deja el pipeline incompleto.
+
+Como consecuencia colateral, al haber un solo archivo, el agente apunta el input del grep al archivo concreto en vez de a la carpeta, y nombra la salida de forma genérica (`output_grep`). Con varios archivos, ambos detalles cantan; con uno solo, pasan desapercibidos.
+
+### Causa
+La plantilla PLAN_TAREA v1 no tiene un campo específico para "archivos a procesar con Hadoop". Cuando se rellena con el prompt 3, el agente registra los DataFrames cargados de UD1 y olvida que UD2/UD3 puede necesitar varios archivos físicos en HDFS.
+
+### Solución aplicada
+1. **Plantilla PLAN_TAREA v2**: añadido campo "Archivos a subir a HDFS (UD2/UD3)" con tabla de origen → nombre corto.
+2. **CONTEXTO_UD2 v4 sección 4**: añadida nota común a Grep, Java y Streaming: el input apunta a la carpeta HDFS, no a archivos individuales; la carpeta de salida lleva nombre descriptivo, no genérico.
+3. **Prompt 3 del flujo**: no requiere cambio. Cuando la plantilla tenga el campo nuevo, el agente lo rellenará en el análisis previo igual que rellena los demás.
+
+### Por qué este patrón es genérico
+Aplica a cualquier examen de UD2/UD3 con cualquier dataset:
+- Si el examen pide procesar 1 solo archivo: el campo se rellena con 1 fila, el grep apunta a la carpeta (que contiene 1 archivo), y la salida lleva nombre descriptivo. No hay coste.
+- Si el examen pide procesar N archivos: el campo se rellena con N filas, el agente sube los N, el grep procesa la carpeta entera. Pipeline correcto.
+
+### Acciones
+1. Aplicado parche a plantilla PLAN_TAREA v2 (hecho).
+2. Aplicado parche a CONTEXTO_UD2 v4 secciones 4 y 6 (hecho).
+3. Validar en próximo simulacro UD2 con dataset distinto que el patrón se replica bien.
+4. Cuando se construyan CONTEXTO_UD3, CONTEXTO_UD4, CONTEXTO_UD5, replicar la convención de "input → carpeta, salida → nombre descriptivo" si esas unidades también usan jobs Hadoop.
+
+---
+
+## M016 · Inventario de plantillas pre-cargadas en CONTEXTO_UD2
+
+**Detectada:** 2026-04-28, simulacro UD2 (apartado Java)
+**Estado:** ✅ aplicada al CONTEXTO_UD2 v4
+**Prioridad:** alta
+
+### Problema observado
+El CONTEXTO_UD2 v3 mencionaba la existencia de plantillas pre-cargadas pero solo en una nota de uso al inicio, sin inventario explícito ni citable. Cuando el agente llegó al apartado MapReduce Java, encontró una plantilla pre-cargada incompleta (solo el driver, sin Mapper ni Reducer, con nombre de archivo incoherente con la clase pública). En vez de avisar y detenerse, el agente la rehizo en silencio con `%%writefile WordCount.java`, generando un archivo paralelo. Funcionó, pero rompió el contrato del sistema (regla "no inventar Java desde cero, adapta la plantilla").
+
+### Causa raíz
+La información sobre las plantillas estaba enterrada en una nota suelta. El agente no tenía cómo "citar" la plantilla aplicable a cada apartado, igual que sí cita reglas semánticas.
+
+### Solución aplicada
+Sección 0 nueva en CONTEXTO_UD2 v4 con tabla de inventario (Plantilla Instalación, HDFS, Java, Streaming), nombres canónicos de archivos y carpetas HDFS, y reglas duras sobre cómo adaptar / cuándo avisar y detenerse.
+
+### Convención añadida
+Nombres canónicos fijos para que el agente no improvise:
+- Carpeta HDFS de input: `dataset/` (singular).
+- Salidas: `grep_<patrón>`, `wordcount_java`, `wordcount_streaming` (descriptivas, nunca genéricas).
+- Java: tres archivos separados (`WordCount.java`, `WordCountMapper.java`, `WordCountReducer.java`).
+- Marcadores en los comentarios del código: `CAMBIAR CASI SIEMPRE`, `REVISAR`, `NORMALMENTE NO CAMBIAR`, `CAMBIAR SIEMPRE EN EJECUCIÓN`, `NO OLVIDAR`.
+
+### Plantillas pre-cargadas en el cuaderno
+1. **Plantilla Instalación**: 1 celda markdown + 1 celda código (instalar Hadoop 3.4.2 + variables de entorno).
+2. **Plantilla HDFS**: 1 celda markdown + 1 celda código (patrón de 4 pasos).
+3. **Plantilla Java**: 1 celda markdown + 4 celdas código (driver + mapper + reducer + compilación/ejecución).
+4. **Plantilla Streaming**: 1 celda markdown + 3 celdas código (mapper + reducer + ejecución).
+
+### Acciones
+1. Aplicados parches A-D al CONTEXTO_UD2 v4 (hecho).
+2. Cierra también la parte pendiente de M015 (inventario de archivos a HDFS via PLAN_TAREA sigue siendo válida y aplicada en v2).
+3. Cuando se construyan plantillas para CONTEXTO_UD3, replicar el formato de sección 0.
