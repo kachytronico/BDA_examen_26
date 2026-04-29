@@ -185,7 +185,7 @@ Ahora escribe solo la conclusión de este apartado.
 
 Reglas de forma:
 - celda de texto del cuaderno (no solo en chat),
-- breve (1-3 líneas),
+- breve, sencillo y directo pero sin olvidar nada esencial de lo qeu pida el enunciado, que se cite si hay cosas pendientes o tareas para después.
 - en primera persona del singular ("He..." o "Veo que...", NO "Hemos..." ni "Se ha...").
 - ligada al resultado real que se ve en la salida,
 - termina con un dato concreto observado en la salida (cifra, nombre de columna, recuento, p-valor, etc.).
