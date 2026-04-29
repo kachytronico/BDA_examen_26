@@ -5,16 +5,19 @@
 > **Cómo se inyecta:** el usuario pasa este `.md` por chat cuando el agente la pide.
 > **Resultado esperado:** Spark instalado con soporte Hive, base de datos creada, tablas guardadas y validadas, **al menos 2 consultas HQL ejecutadas, una de ellas con JOIN entre 2 tablas**.
 
+> **Cambios respecto a v1:** la celda de instalación de Spark usa `dlcdn.apache.org` (CDN oficial actual) en lugar de `archive.apache.org`, con verificación obligatoria del tamaño del `.tgz` antes de extraer. La versión de Spark se parametriza en una variable. `archive.apache.org` queda como fallback documentado.
+
 ---
 
 ## Por qué esta plantilla existe
 
-La fase Spark + Hive de UD3 tiene cuatro puntos de fallo conocidos que esta plantilla blinda:
+La fase Spark + Hive de UD3 tiene cinco puntos de fallo conocidos que esta plantilla blinda:
 
 1. **Instalación de Spark con `pip install pyspark`** → trae su propio Hadoop y rompe la coherencia con Hadoop 3.4.2 manual. La plantilla usa `wget .tgz + findspark`.
-2. **Metastore Derby corrupto entre sesiones** → `Failed to start database 'metastore_db'` en el primer `spark.sql` Hive. La plantilla limpia `metastore_db/` y `derby.log` antes del primer uso.
-3. **Tablas en `default`** cuando el enunciado pide "base de datos Hive". La plantilla usa `CREATE DATABASE IF NOT EXISTS <base>` + `USE <base>` antes de `saveAsTable`.
-4. **Consultas sobre tablas no validadas** → joins vacíos, columnas mal tipadas no detectadas. La plantilla obliga a `DESCRIBE` + `COUNT(*)` + `SELECT * LIMIT 3` por cada tabla antes de consultar.
+2. **Descarga truncada de `archive.apache.org`** → el mirror histórico aplica throttling y `wget -q` puede dejar un `.tgz` incompleto sin avisar (típicamente ~100 MB en lugar de ~400 MB). La plantilla usa `dlcdn.apache.org` (CDN oficial actual) con verificación de tamaño obligatoria.
+3. **Metastore Derby corrupto entre sesiones** → `Failed to start database 'metastore_db'` en el primer `spark.sql` Hive. La plantilla limpia `metastore_db/` y `derby.log` antes del primer uso.
+4. **Tablas en `default`** cuando el enunciado pide "base de datos Hive". La plantilla usa `CREATE DATABASE IF NOT EXISTS <base>` + `USE <base>` antes de `saveAsTable`.
+5. **Consultas sobre tablas no validadas** → joins vacíos, columnas mal tipadas no detectadas. La plantilla obliga a `DESCRIBE` + `COUNT(*)` + `SELECT * LIMIT 3` por cada tabla antes de consultar.
 
 ---
 
@@ -25,7 +28,7 @@ La fase Spark + Hive de UD3 tiene cuatro puntos de fallo conocidos que esta plan
 
 Aplicamos PySpark con soporte Hive para:
 
-1. **Instalar Spark 3.5.4** desde el binario oficial (compatible con Hadoop 3.4.2).
+1. **Instalar Spark 3.5.x** desde el CDN oficial (compatible con Java 17 y Hadoop 3.4.2).
 2. **Crear una sesión Spark** con `enableHiveSupport()` para usar el metastore Hive embebido.
 3. **Limpiar el metastore Derby** anterior si hubiera quedado de una sesión previa.
 4. **Crear la base de datos Hive** explícitamente y guardar las tablas dentro.
@@ -36,23 +39,58 @@ Esta secuencia es obligatoria — saltarse cualquier paso provoca errores conoci
 
 ---
 
-## Celda de código 1 · Instalación de Spark
+## Celda de código 1 · Instalación de Spark (con verificación)
 
 ```python
-# Descarga del binario Spark compilado contra Hadoop 3 (compatible con Hadoop 3.4.2 manual)
-# IMPORTANTE: usar archive.apache.org (URL inmutable), NO downloads.apache.org (puede romperse)
-!wget -q https://archive.apache.org/dist/spark/spark-3.5.4/spark-3.5.4-bin-hadoop3.tgz
-!tar xf spark-3.5.4-bin-hadoop3.tgz
-!pip install -q findspark
-
 import os
 
+# Versión de Spark a instalar.
+# IMPORTANTE: dlcdn.apache.org sirve solo la VERSIÓN ACTUAL de cada rama 3.5.x.
+# Si esta versión da 404, comprobar la disponible con:
+#   !curl -s https://dlcdn.apache.org/spark/ | grep -oE 'spark-3\.5\.[0-9]+' | sort -u
+# y actualizar SPARK_VERSION abajo.
+SPARK_VERSION = "3.5.8"
+
+# 1. Limpiar restos de intentos anteriores (idempotente)
+!rm -rf /content/spark-3.5*-bin-hadoop3
+!rm -f /content/spark-3.5*-bin-hadoop3.tgz
+
+# 2. Descargar desde CDN oficial (sin throttling, descarga completa garantizada)
+!wget https://dlcdn.apache.org/spark/spark-{SPARK_VERSION}/spark-{SPARK_VERSION}-bin-hadoop3.tgz
+
+# 3. Verificar tamaño antes de extraer (Spark 3.5.x completo pesa ~400 MB)
+size_mb = os.path.getsize(f"/content/spark-{SPARK_VERSION}-bin-hadoop3.tgz") / 1024 / 1024
+print(f"\nTamaño descargado: {size_mb:.1f} MB")
+assert size_mb > 350, f"Descarga truncada ({size_mb:.1f} MB). Reintentar."
+
+# 4. Extraer al directorio /content/ explícitamente
+!tar xf /content/spark-{SPARK_VERSION}-bin-hadoop3.tgz -C /content/
+
+# 5. Verificar que el binario está donde esperamos
+assert os.path.exists(f"/content/spark-{SPARK_VERSION}-bin-hadoop3/bin/spark-submit"), \
+    "Spark no se extrajo correctamente"
+
+# 6. Instalar findspark
+!pip install -q findspark
+
+# 7. Variables de entorno
 os.environ["JAVA_HOME"]  = "/usr/lib/jvm/java-17-openjdk-amd64"
-os.environ["SPARK_HOME"] = "/content/spark-3.5.4-bin-hadoop3"
+os.environ["SPARK_HOME"] = f"/content/spark-{SPARK_VERSION}-bin-hadoop3"
 
 import findspark
 findspark.init()
+
+print(f"\n✅ Spark {SPARK_VERSION} instalado correctamente")
 ```
+
+> **Si `dlcdn.apache.org` devuelve 404 con la versión indicada**, significa que esa versión ya no es la actual de la rama 3.5.x (el CDN solo sirve la última de cada rama). Dos opciones:
+> - **Opción A (preferida):** ejecutar `!curl -s https://dlcdn.apache.org/spark/ | grep -oE 'spark-3\.5\.[0-9]+' | sort -u` y actualizar `SPARK_VERSION` con la que aparezca.
+> - **Opción B (fallback):** usar `archive.apache.org` con `wget --tries=5 --timeout=120 --continue` (mirror histórico, más lento pero conserva versiones antiguas):
+>   ```python
+>   !wget --tries=5 --timeout=120 --continue \
+>     https://archive.apache.org/dist/spark/spark-3.5.4/spark-3.5.4-bin-hadoop3.tgz \
+>     -O /content/spark-3.5.4-bin-hadoop3.tgz
+>   ```
 
 ---
 
@@ -220,6 +258,8 @@ spark.sql(query2).show()
 
 ### Reglas duras
 - **Prohibido `!pip install pyspark`** — trae su propio Hadoop y rompe la coherencia con Hadoop 3.4.2 manual de UD2/UD3. Siempre `wget .tgz + findspark`.
+- **Mirror obligatorio:** `dlcdn.apache.org` (CDN oficial actual). Si da 404, comprobar la versión disponible (es la última estable de la rama 3.5) y actualizar `SPARK_VERSION`. **No usar** `archive.apache.org` salvo como fallback documentado, porque trunca descargas silenciosamente con `wget -q`.
+- **Verificación obligatoria del tamaño descargado** (`assert size_mb > 350`). Sin este check, una descarga truncada deja el `.tgz` con ~100 MB y `tar xf` extrae carpetas vacías sin error visible.
 - **`JAVA_HOME` y `SPARK_HOME` se fijan ANTES de `findspark.init()`**. Sin esto, `findspark` no encuentra Spark correctamente.
 - **Limpieza Derby ANTES del primer `spark.sql` Hive**. Idempotente, no daña si los ficheros no existen. **No** ejecutarla después de haber hecho `CREATE DATABASE` o `saveAsTable` (deja Derby inconsistente). El orden correcto es: SparkSession → limpieza Derby → primer `spark.sql`.
 - **`CREATE DATABASE IF NOT EXISTS <base>` + `USE <base>` antes de cualquier `saveAsTable`**. El enunciado pide "base de datos Hive", no `default`.
@@ -227,6 +267,7 @@ spark.sql(query2).show()
 - **Al menos una consulta HQL con JOIN entre 2 tablas** (requisito del enunciado). Sin esto, el apartado 5 está incompleto.
 
 ### Adaptaciones típicas
+- **Versión de Spark:** la rama 3.5.x es la verificada para UD3 con Java 17. La versión patch concreta (3.5.4, 3.5.5, 3.5.8...) depende de cuál sirva `dlcdn.apache.org` el día del examen. **No saltar a Spark 4.x** sin pruebas: cambia Scala a 2.13 y los jars Hive embebidos pueden romper con metastore Derby.
 - **Si las tablas vienen 100% de CSVs originales** (sin paso por Pig): usar `header=True, inferSchema=True` en todas. Eliminar el bloque del schema explícito.
 - **Si vienen 100% de salida de Pig**: todas con `header=False, schema=...` y schema string específico.
 - **Mezcla** (caso típico de UD3): unas con cabecera, otras sin. Diferenciar como hace la plantilla.
@@ -235,14 +276,16 @@ spark.sql(query2).show()
 
 ### Qué NO cambiar
 - La secuencia: instalación → SparkSession → limpieza Derby → CREATE DATABASE + USE → cargas → saveAsTable → validación → consultas.
-- El uso de `archive.apache.org` (URL inmutable) en lugar de `downloads.apache.org`.
+- El uso de `dlcdn.apache.org` con verificación de tamaño.
 - La validación intermedia (DESCRIBE + COUNT + LIMIT 3).
 - El requisito de al menos una consulta con JOIN entre 2 tablas.
 
 ### Si la sesión Spark falla
-- `Failed to start database 'metastore_db'` → ejecutar la limpieza Derby (celda 3 paso 1).
-- `Database '<base>' not found` al hacer `saveAsTable` → falta `CREATE DATABASE` + `USE`.
-- `Table or view not found` al consultar → tabla no se guardó en la base correcta. Verificar con `SHOW TABLES IN <base>`.
-- `inferSchema` infiere todo como string en la salida de Pig → no se usa schema explícito. Esta plantilla ya lo gestiona.
+- **`wget` devuelve 404** → la versión de `SPARK_VERSION` ya no está en `dlcdn`. Ejecutar `!curl -s https://dlcdn.apache.org/spark/ | grep -oE 'spark-3\.5\.[0-9]+' | sort -u` y actualizar.
+- **Tamaño descargado < 350 MB** → conexión cortada. Reintentar el `wget` (probablemente glitch puntual). Si persiste, usar fallback de `archive.apache.org` con `--tries=5 --timeout=120 --continue`.
+- **`Failed to start database 'metastore_db'`** → ejecutar la limpieza Derby (celda 3 paso 1).
+- **`Database '<base>' not found`** al hacer `saveAsTable` → falta `CREATE DATABASE` + `USE`.
+- **`Table or view not found`** al consultar → tabla no se guardó en la base correcta. Verificar con `SHOW TABLES IN <base>`.
+- **`inferSchema` infiere todo como string** en la salida de Pig → no se usa schema explícito. Esta plantilla ya lo gestiona.
 
 Si nada de esto resuelve, **avisar al usuario y detenerse**. No reintentar a ciegas (regla M015 de Pig también aplica aquí).
