@@ -46,14 +46,18 @@ Este proyecto muestra competencias en:
 
 ---
 
-## Ejemplos de uso
+## Prompts incluidos
 
-- Crear una plantilla de análisis exploratorio de datos.
-- Depurar errores de pandas o scikit-learn.
-- Explicar una métrica de clasificación.
-- Convertir una idea teórica en un bloque de código.
-- Mejorar las celdas Markdown de un notebook.
-- Simplificar una solución demasiado larga.
+- [`prompts/system_prompt_template.md`](prompts/system_prompt_template.md): plantilla base para pedir ayuda técnica en Colab.
+- [`prompts/colab_debugging_prompt.md`](prompts/colab_debugging_prompt.md): prompt para depurar errores de Python/Colab.
+- [`prompts/notebook_documentation_prompt.md`](prompts/notebook_documentation_prompt.md): prompt para mejorar explicaciones Markdown en notebooks.
+
+---
+
+## Ejemplos incluidos
+
+- [`examples/example_workflow.md`](examples/example_workflow.md): ejemplo de flujo tarea → prompt → código → revisión humana.
+- [`examples/example_colab_task.md`](examples/example_colab_task.md): ejemplo de bloque inicial para revisar un CSV en Colab.
 
 ---
 
@@ -62,6 +66,8 @@ Este proyecto muestra competencias en:
 ```text
 colab-gemini-course-agent/
 ├── README.md
+├── LICENSE
+├── .gitignore
 ├── prompts/
 │   ├── system_prompt_template.md
 │   ├── colab_debugging_prompt.md
@@ -86,6 +92,8 @@ Este repositorio no incluye:
 - enunciados internos no publicables.
 
 La salida de una IA no se acepta sin más: se prueba, se revisa y se adapta. El objetivo no es sustituir el aprendizaje, sino usar la IA como apoyo para programar, estudiar y documentar mejor.
+
+Consulta [`docs/responsible_use.md`](docs/responsible_use.md) para ver las reglas de uso responsable.
 
 ---
 
